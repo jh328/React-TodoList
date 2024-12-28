@@ -1,67 +1,78 @@
 import "./App.css";
 import { useState } from "react";
+import OutlineInput from "./components/OutlineInput.js";
+import PrimaryButton from "./components/PrimaryButton.js";
+import TextButton from "./components/TextButton.js";
+import ToDo from "./components/ToDo.js";
+
 function App() {
-  const [toDo, setToDo] = useState("");
-  const [toDos, setToDos] = useState([]);
+  const [inputValue, setInputValue] = useState(""); // 왜 빈 문자열을 줘야 하는지 이해 안됨
+  const [toDoList, setToDoList] = useState([]); // 배열을 준 이유는 상태 값을 추가할 때마다 계속 넣어야 하기 때문에 배열을 준걸까?
 
-  const onChange = (e) => {
-    setToDo(e.target.value);
-  };
-  const onSubmit = (e) => {
-    e.preventDefault(); // 새로고침 막아주는 코드
-    if (toDo.trim() !== "") {
-      setToDos((currentArray) => [...currentArray, toDo]);
-      setToDo("");
-    }
+  const ChangeHandle = (event) => {
+    setInputValue(event.target.value);
   };
 
-  const onToggleCheck = (index) => {
-    setToDos((currentArray) => {
-      return currentArray.map((item, i) => {
-        if (i === index) {
-          return { ...item, checked: !item.checked };
+  const addToDo = () => {
+    setToDoList((current) => [
+      ...current,
+      { isComplete: false, value: inputValue },
+    ]);
+    setInputValue();
+  };
+
+  const toggleComplete = (index) => {
+    setToDoList((current) =>
+      current.map((toDo, toDoindex) => {
+        if (toDoindex === index) {
+          const newToDo = Object.assign({}, toDo);
+
+          newToDo.isComplete = !newToDo.isComplete;
+          return newToDo;
+        } else {
+          return toDo;
         }
-        return item;
-      });
-    });
+      })
+    );
   };
 
-  const onRemove = (index) => {
-    setToDos((currentArray) => currentArray.filter((_, i) => i !== index));
+  const isUncompletedToDo = (toDo) => !toDo.isComplete;
+
+  const getUncompletedToDoList = () => toDoList.filter(isUncompletedToDo);
+
+  const removeAllCompletedToDo = () => {
+    setToDoList((current) => current.filter(isUncompletedToDo));
   };
 
   return (
-    <>
-      <h1 className="title">Todo List</h1>
-      <form className="form-box" onSubmit={onSubmit}>
-        <input
-          id="todo"
-          className="todo-input"
-          type="text"
-          value={toDo}
-          onChange={onChange}
-          placeholder="입력해주세요"
+    <div className="app">
+      <h1 className="app-title">&#128466; To Do List</h1>
+
+      <div className="app-form">
+        <OutlineInput
+          placeholder="무엇을 해야 하나요"
+          value={inputValue}
+          onChange={ChangeHandle}
         />
-        <button id="addBtn" type="submit" className="add-btn"></button>
-      </form>
-      <div id="todoBox" className="todo-box">
-        {toDos.map((item, index) => (
-          <label
-            className={`new-todo ${item.checked ? "check" : ""}`}
+        <PrimaryButton label="할 일 추가" onClick={addToDo} />
+      </div>
+
+      <div className="app-list">
+        {toDoList.map((toDo, index) => (
+          <ToDo
             key={index}
-          >
-            {item.text}
-            <input
-              type="checkbox"
-              checked={item.checked}
-              onChange={() => onToggleCheck(index)}
-            />
-            <span className="check-mark"></span>
-            <button className="rm-btn" onClick={() => onRemove(index)}></button>
-          </label>
+            isComplete={toDo.isComplete}
+            value={toDo.value}
+            onClick={() => toggleComplete(index)}
+          />
         ))}
       </div>
-    </>
+
+      <div className="app-footer">
+        <p>남은 일: {getUncompletedToDoList().length}개</p>
+        <TextButton label="완료 목록 삭제" onClick={removeAllCompletedToDo} />
+      </div>
+    </div>
   );
 }
 
